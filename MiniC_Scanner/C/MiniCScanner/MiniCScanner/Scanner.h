@@ -7,7 +7,7 @@
 
 
 #define NO_KEYWORD 16 //7+9
-#define ID_LENGTH 12
+#define ID_LENGTH 1024
 
 struct tokenType {
 	int number;
@@ -15,6 +15,9 @@ struct tokenType {
 		char id[ID_LENGTH];
 		int num;
 	} value;
+
+	int linenumber=9999;
+	int columnnumber=9999;
 };
 
 
@@ -38,10 +41,10 @@ enum tsymbol {
 	//   ...........    custom symbols ............................... //
 	/* 40         41          42        43           44         45     */
 	tchar,  tdouble,          tfor,     tdo,         tgoto,     tswitch,
-	/* 46         47          48        49                         */
-	tcase,        tbreak,     tdefault, tcolon
+	/* 46         47          48        49           50         51     */
+	tcase,        tbreak,     tdefault, tcolon,      tcharlit,  tstrlit 
 };
 
 
-struct tokenType scanner();
-void printToken(struct tokenType token);
+struct tokenType scanner(int* line, int* column);
+void printToken(struct tokenType token, char* fileName);

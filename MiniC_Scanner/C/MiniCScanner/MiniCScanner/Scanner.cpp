@@ -13,7 +13,7 @@ extern FILE *sourceFile;                       // miniC source program
 
 int superLetter(char ch);
 int superLetterOrDigit(char ch);
-int getNumber(char firstCharacter);
+int getNumber(char firstCharacter, int *column);
 int hexValue(char ch);
 void lexicalError(int n);
 
@@ -37,8 +37,8 @@ const char *tokenName[] = {
 	//   ...........    custom symbols ............................... //
 	/* 40         41          42        43           44         45     */
 	"char",  "double",        "for",    "do",        "goto",    "switch",
-	/* 46         47          48        49            t             */
-	   "case",    "break",    "default","colon"
+	/* 46         47          48        49           50         51    */
+	   "case",    "break",    "default","colon",     "charlit", "strlit" 
 };
 
 const char *keyword[NO_KEYWORD] = {
@@ -53,39 +53,65 @@ enum tsymbol tnum[NO_KEYWORD] = {
 	tbreak,    tdefault
 };
 
-struct tokenType scanner() // 토큰타입을 반환하는 함수
+struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는 함수
 {
 	struct tokenType token;
 	int i, index;
 	char ch, id[ID_LENGTH];
-
 	token.number = tnull;
 
+
+
 	do {
-		while (isspace(ch = fgetc(sourceFile)));	// state 1: skip blanks // 앞에 공백문자 무시하기
+		while (true){
+			ch = fgetc(sourceFile);
+			*column += 1;
+			if (!isspace(ch)){
+				break;
+			}
+			if (ch=='\n'){
+				*column = 0;
+				*line += 1;
+			}
+		};	// state 1: skip blanks // 앞에 공백문자 무시하기
+	
+
 		if (superLetter(ch)) { // identifier or keyword // 알파벳 or _ 으로 시작하는 토큰
 			i = 0;
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			do {
 				if (i < ID_LENGTH) id[i++] = ch;
 				ch = fgetc(sourceFile);
+				*column += 1;
 			} while (superLetterOrDigit(ch)); //알파벳 or digit or _
 			//하나의 토큰을 id에 저장함.
-			if (i >= ID_LENGTH) lexicalError(1); // ID_LENGTH보다 토큰의 캐릭터길이가 길다.
+			if (i >= ID_LENGTH) 
+				lexicalError(1); // ID_LENGTH보다 토큰의 캐릭터길이가 길다.
 			id[i] = '\0'; //맨끝에 \0 붙여준다.
-			ungetc(ch, sourceFile);  //  retract //하나 더 읽은거 다시 넣는다.
-									 // find the identifier in the keyword table
+			ungetc(ch, sourceFile);  //  retract //하나 더 읽은거 다시 넣는다.		
+			*column -= 1;				 
+			// find the identifier in the keyword table
 			for (index = 0; index < NO_KEYWORD; index++)
-				if (!strcmp(id, keyword[index])) break; // 동일하면 break
-			if (index < NO_KEYWORD)    // found, keyword exit
+				if (!strcmp(id, keyword[index])) 
+					break; // 동일하면 break
+			if (index < NO_KEYWORD){    // found, keyword exit
 				token.number = tnum[index]; // keyword에 해당하는 tnum의 값을 number에 준다.
+				
+			}
 			else {                     // not found, identifier exit
 				token.number = tident;  // keyword가 아님
 				strcpy_s(token.value.id, id); // TOKENVALUE를 저장
+				
 			}
 		}  // end of identifier or keyword
 		else if (isdigit(ch)) {  // number // digit으로 시작하는 토큰
-			token.number = tnumber; //뭔지 정의하고
-			token.value.num = getNumber(ch); // 뭔값을 가지는지 저장한다.
+			token.number = tnumber; //뭔지 정의하고 // 임시
+			printf("this is crazy... %d",*column);
+			token.columnnumber = *column;
+			token.linenumber = *line;
+			token.value.num = getNumber(ch, column); // 뭔값을 가지는지 저장한다.
+			
 		}
 		else switch (ch) {  // special character
 		case '/':
@@ -101,6 +127,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tdiv; //걍 나누기구나~~
 				ungetc(ch, sourceFile); // retract // 하나미리 받은거 스트림에 돌려준다.
+				*column -= 1;
 			}
 			break;
 		case '!':
@@ -109,6 +136,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tnot; //걍 not이구나~~
 				ungetc(ch, sourceFile); // retract 하나 미리 가져온거 돌려준다.
+				*column -= 1;
 			}
 			break;
 		case '%':
@@ -119,6 +147,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tremainder;
 				ungetc(ch, sourceFile);
+				*column -= 1;
 			}
 			break;
 		case '&':
@@ -127,6 +156,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				lexicalError(2); //&은 &&만 취급
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
 		case '*':
@@ -135,6 +165,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tmul;
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
 		case '+':
@@ -144,6 +175,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tplus;
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
 		case '-':
@@ -153,6 +185,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tminus;
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
 		case '<':
@@ -161,6 +194,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tless;
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
 		case '=':
@@ -169,6 +203,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tassign;
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
 		case '>':
@@ -177,6 +212,7 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				token.number = tgreat;
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
 		case '|':
@@ -185,20 +221,148 @@ struct tokenType scanner() // 토큰타입을 반환하는 함수
 			else {
 				lexicalError(3); // |은 ||만 취급
 				ungetc(ch, sourceFile);  // retract
+				*column -= 1;
 			}
 			break;
-		case '(': token.number = tlparen;         break;
-		case ')': token.number = trparen;         break;
-		case ',': token.number = tcomma;          break;
-		case ';': token.number = tsemicolon;      break;
-		case '[': token.number = tlbracket;       break;
-		case ']': token.number = trbracket;       break;
-		case '{': token.number = tlbrace;         break;
-		case '}': token.number = trbrace;         break;
-		case EOF: token.number = teof;            break;
-		case ':': token.number = tcolon;          break;
-		case '\'':
-			ch = fgetc(sourceFile): // 책보고 구현해보자...
+		case '(': 
+			token.number = tlparen;
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			        
+			break;
+		case ')': 
+			token.number = trparen;         
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			        
+			break;
+		case ',': 
+			token.number = tcomma;          
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			      
+			break;
+		case ';': 
+			token.number = tsemicolon;      
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			        
+			break;
+		case '[': 
+			token.number = tlbracket;       
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			         
+			break;
+		case ']': 
+			token.number = trbracket;       
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			       
+			break;
+		case '{': 
+			token.number = tlbrace;         
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			        
+			break;
+		case '}': 
+			token.number = trbrace;         
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			       
+			break;
+		case EOF: 
+			token.number = teof;            
+			token.columnnumber = *column;
+			token.linenumber = *line;         
+			        
+			break;
+		case ':': 
+			token.number = tcolon;          
+			token.columnnumber = *column;
+			token.linenumber = *line;
+			        
+			break;
+		case '\'': //state A
+			token.columnnumber = *column;
+			token.linenumber = *line;
+			ch = fgetc(sourceFile);
+			*column += 1;
+			if (ch == '\\')  // \\, \', \" ...
+			{
+				id[0] = ch;
+				id[1] = fgetc(sourceFile);
+				id[2] = '\0'; 
+				*column += 1;			
+			}
+			else if (ch=='\''){
+				lexicalError(7);
+				break;
+			}
+			else { 
+				id[0] = ch; 
+				id[1] = '\0';
+			}
+			ch = fgetc(sourceFile);
+			*column += 1;
+			if (ch == '\'') {
+				token.number = tcharlit;
+				strcpy_s(token.value.id, id);
+				
+			}
+			else
+				lexicalError(5);
+			
+			break;
+
+		case '\"':
+				i = 0;
+				while (true){
+					token.columnnumber = *column;
+					token.linenumber = *line;
+					ch = fgetc(sourceFile);
+					*column+=1;
+					if (ch=='\"' && (ch!='\"' || id[i-1]!='\\')){
+						break;
+					}
+
+					if (i<ID_LENGTH)  
+						id[i++] = ch;
+					else {             
+						lexicalError(1);
+						break;
+					}
+					if (ch == '\n') {
+						ungetc(ch, sourceFile);
+						*column-=1;
+						lexicalError(6);
+						break;
+					}
+				}
+				if (i<ID_LENGTH) {
+					id[i]='\0'; 
+					if (ch=='\"') {			
+						strcpy_s(token.value.id,id);
+						token.number=tstrlit;
+						
+					}
+				}
+				else {
+					while (true){
+						ch = fgetc(sourceFile);
+						if (ch=='\n'){
+							ungetc(ch,sourceFile);
+							break;
+						
+						}
+							
+					}
+						
+				}
+				break;
+			
+
 
 		default: {
 			printf("Current character : %c", ch);
@@ -223,6 +387,13 @@ void lexicalError(int n)
 		break;
 	case 4: printf("invalid character\n");
 		break;
+	case 5: printf("character literal needs \' at the end\n");
+		break;
+	case 6: printf("string literal needs \" at the end\n");
+		break;
+	case 7: printf("between single quotation marks need one character. cannot be blank\n");
+		break;
+	
 	}
 }
 
@@ -238,7 +409,7 @@ int superLetterOrDigit(char ch)
 	else return 0;
 }
 
-int getNumber(char firstCharacter)
+int getNumber(char firstCharacter, int* column)
 {
 	int num = 0;
 	int value;
@@ -246,14 +417,24 @@ int getNumber(char firstCharacter)
 
 	if (firstCharacter == '0') {
 		ch = fgetc(sourceFile);
+		*column += 1;
 		if ((ch == 'X') || (ch == 'x')) {		// hexa decimal
-			while ((value = hexValue(ch = fgetc(sourceFile))) != -1)
+			while (true){
+				ch = fgetc(sourceFile);
+				*column+=1;
+				value = hexValue(ch);
+				if (value == -1){
+					break;
+				}
 				num = 16 * num + value;
+			}
+				
 		}
 		else if ((ch >= '0') && (ch <= '7'))	// octal
 			do {
 				num = 8 * num + (int)(ch - '0');
 				ch = fgetc(sourceFile);
+				*column +=1;
 			} while ((ch >= '0') && (ch <= '7'));
 		else num = 0;						// zero
 	}
@@ -262,9 +443,11 @@ int getNumber(char firstCharacter)
 		do {
 			num = 10 * num + (int)(ch - '0');
 			ch = fgetc(sourceFile);
+			*column += 1;
 		} while (isdigit(ch));
 	}
 	ungetc(ch, sourceFile);  /*  retract  */
+	*column -= 1;
 	return num;
 }
 
@@ -282,13 +465,16 @@ int hexValue(char ch)
 	}
 }
 
-void printToken(struct tokenType token)
+void printToken(struct tokenType token, char* fileName)
 {
 	if (token.number == tident) // keyword가 아닌넘들
-		printf("number: %d, value: %s\n", token.number, token.value.id);
+		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.id, fileName, token.linenumber, token.columnnumber);
 	else if (token.number == tnumber) //숫자
-		printf("number: %d, value: %d\n", token.number, token.value.num);
-	else // 이미 정의되있는 TN으로도 알 수 있는 것들
-		printf("number: %d(%s)\n", token.number, tokenName[token.number]);
+		printf("%s (%d, %d, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.num, fileName, token.linenumber, token.columnnumber);
+	else if (token.number == tcharlit || token.number == tstrlit)
+		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.id, fileName, token.linenumber, token.columnnumber);
+	else{ // 이미 정의되있는 TN으로도 알 수 있는 것들
+		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, tokenName[token.number], fileName ,token.linenumber, token.columnnumber);
+		}
 
 }

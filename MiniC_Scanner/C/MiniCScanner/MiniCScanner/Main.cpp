@@ -40,15 +40,19 @@ int main(int argc, char *argv[])
 	
 	printf(" === start of Scanner\n");
 	
-	token = scanner();
+	int lp=1;
+	int cp=0;
+	
+
+	token = scanner(&lp,&cp);
 	
 	while (token.number != teof) {
 		std::cout.width(4);
 		std::cout <<  std::right << tokencounter << " ";
 		tokencounter += 1; 
-		printf("Current Token --> ");
-		printToken(token);
-		token = scanner();
+		printf("Token -----> ");
+		printToken(token, fileName);
+		token = scanner(&lp, &cp);
 		
 	} /* while (1) */
 
