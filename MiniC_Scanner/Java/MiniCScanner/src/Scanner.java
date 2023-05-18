@@ -66,7 +66,7 @@ public class Scanner {
                 break;
             
             case '/':  // divide or divAssign or comment
-                ch = nextChar();
+                ch = nextChar(); // ch는 다음거
                 if (ch == '=')  { // divAssign
                 	ch = nextChar();
                 	return Token.divAssignTok;
@@ -76,7 +76,7 @@ public class Scanner {
                 if (ch != '*' && ch != '/') return Token.divideTok;
                 
                 // multi line comment
-                if (ch == '*') { 
+                if (ch == '*') { // /**/
     				do {
     					while (ch != '*') ch = nextChar();
     					ch = nextChar();
@@ -84,7 +84,7 @@ public class Scanner {
     				ch = nextChar();
                 }
                 // single line comment
-                else if (ch == '/')  {
+                else if (ch == '/')  { // //
 	                do {
 	                    ch = nextChar();
 	                } while (ch != eolnCh);
@@ -101,7 +101,7 @@ public class Scanner {
             */    
             case eofCh: return Token.eofTok;
             
-            case '+': 
+            case '+':
             	ch = nextChar();
 	            if (ch == '=')  { // addAssign
 	            	ch = nextChar();
@@ -201,7 +201,7 @@ public class Scanner {
         ch = nextChar();
         if (ch != c)
             return one;
-        ch = nextChar();
+        ch = nextChar();//두개니까 한번더 읽어야함.
         return two;
     }
 

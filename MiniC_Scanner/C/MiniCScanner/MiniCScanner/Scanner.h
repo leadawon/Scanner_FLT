@@ -6,7 +6,7 @@
 #pragma once
 
 
-#define NO_KEYWORD 7
+#define NO_KEYWORD 16 //7+9
 #define ID_LENGTH 12
 
 struct tokenType {
@@ -33,8 +33,13 @@ enum tsymbol {
 	//   ...........    word symbols ................................. //
 	/* 30         31          32        33           34         35     */
 	tconst, telse, tif, tint, treturn, tvoid,
-	/* 36         37          38        39                             */
-	twhile, tlbrace, tor, trbrace
+	/* 36         37          38        39        */
+	twhile, tlbrace, tor, trbrace,
+	//   ...........    custom symbols ............................... //
+	/* 40         41          42        43           44         45     */
+	tchar,  tdouble,          tfor,     tdo,         tgoto,     tswitch,
+	/* 46         47          48        49                         */
+	tcase,        tbreak,     tdefault, tcolon
 };
 
 
