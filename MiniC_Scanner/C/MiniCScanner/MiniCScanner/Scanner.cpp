@@ -38,7 +38,10 @@ const char *tokenName[] = {
 	/* 40         41          42        43           44         45     */
 	"char",  "double",        "for",    "do",        "goto",    "switch",
 	/* 46         47          48        49           50         51    */
-	   "case",    "break",    "default","colon",     "charlit", "strlit" 
+	   "case",    "break",    "default","colon",     "charlit", "strlit",
+	/* 52    */
+	   "doublelit"	
+
 };
 
 const char *keyword[NO_KEYWORD] = {
@@ -106,12 +109,89 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 		}  // end of identifier or keyword
 		else if (isdigit(ch)) {  // number // digit으로 시작하는 토큰
-			token.number = tnumber; //뭔지 정의하고 // 임시
-			printf("this is crazy... %d",*column);
 			token.columnnumber = *column;
 			token.linenumber = *line;
-			token.value.num = getNumber(ch, column); // 뭔값을 가지는지 저장한다.
+			token.value.num = getNumber(ch, column);
+			ch = fgetc(sourceFile);
+			*column+=1;
+			if (ch == '.') {
+				
+				//token.number = tdoublelit;
+				double zarisu = 1;
+				while(true){
+					ch = fgetc(sourceFile);
+					*column += 1;
+					
+					if(isdigit(ch)){
+						zarisu = zarisu * 0.1;
+						
+						token.double_sector += zarisu * (int(ch)-48);
+						
+						token.number = tdoublelit;
+						
+					}else if(ch=='e'||ch=='E'){
+						ch = fgetc(sourceFile);
+						*column += 1;
+						if (isdigit(ch)) {
+							index = getNumber(ch,column);
+							token.double_sector += token.value.num;
+							for (i = 0; i < index; i++)
+								token.double_sector *= 10;
+						}
+						else if (ch == '+') {
+							ch = fgetc(sourceFile);
+							*column+=1;
+							index = getNumber(ch,column);
+							token.double_sector += token.value.num;
+							for (i = 0; i < index; i++)
+								token.double_sector = token.double_sector * 10;
+						}
+						else if (ch == '-') {
+							ch = fgetc(sourceFile);
+							*column+=1;
+							index = getNumber(ch,column);
+							token.double_sector += token.value.num;
+							for (i = 0; i < index; i++)
+								token.double_sector = token.double_sector / 10;
+						}else{
+							lexicalError(9);
+						}
+						token.number = tdoublelit;
+						break;
+					}
+					else if(isspace(ch) || ch==';'){ //더블끝
+						
+						ungetc(ch, sourceFile);		
+						*column -= 1;	
+						token.number = tdoublelit;
+						
+						token.double_sector += token.value.num;
+						
+						
+						break;
+					}
+					else{
+						lexicalError(8);
+						while(true){
+							ch=fgetc(sourceFile);
+							*column += 1;
+							if (isspace(ch) | ch==';' | ch=='/') {
+								ungetc(ch, sourceFile);
+								*column -=1;
+								break;
+							}
+						}
+					}
+				}
 			
+				
+			}
+			else // 원래코드
+			{
+				token.number = tnumber;
+				ungetc(ch, sourceFile);
+				*column -= 1;
+			}
 		}
 		else switch (ch) {  // special character
 		case '/':
@@ -353,12 +433,31 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 						ch = fgetc(sourceFile);
 						if (ch=='\n'){
 							ungetc(ch,sourceFile);
+							*column -= 1;
 							break;
 						
 						}
 							
 					}
 						
+				}
+				break;
+		case '.':
+				token.columnnumber = *column;
+				token.linenumber = *line;
+				ch = fgetc(sourceFile);
+				*column += 1;
+				if (isdigit(ch)) {
+					token.number = tdoublelit;
+					token.double_sector = getNumber(ch,column);
+					while (token.double_sector >= 1){
+						token.double_sector = token.double_sector * 0.1;
+					}
+				}
+				else {
+					lexicalError(4);
+					ungetc(ch,sourceFile);
+					*column -= 1;
 				}
 				break;
 			
@@ -392,6 +491,10 @@ void lexicalError(int n)
 	case 6: printf("string literal needs \" at the end\n");
 		break;
 	case 7: printf("between single quotation marks need one character. cannot be blank\n");
+		break;
+	case 8: printf("in double type fractional part should consist of number or space.\n");
+		break;
+	case 9: printf("floating point error\n");
 		break;
 	
 	}
@@ -473,6 +576,8 @@ void printToken(struct tokenType token, char* fileName)
 		printf("%s (%d, %d, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.num, fileName, token.linenumber, token.columnnumber);
 	else if (token.number == tcharlit || token.number == tstrlit)
 		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.id, fileName, token.linenumber, token.columnnumber);
+	else if (token.number == tdoublelit)
+		printf("%s (%d, %lf, %s, %d, %d)\n",tokenName[token.number], token.number, token.double_sector, fileName, token.linenumber, token.columnnumber);
 	else{ // 이미 정의되있는 TN으로도 알 수 있는 것들
 		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, tokenName[token.number], fileName ,token.linenumber, token.columnnumber);
 		}

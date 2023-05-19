@@ -14,7 +14,10 @@ struct tokenType {
 	union {
 		char id[ID_LENGTH];
 		int num;
+		
 	} value;
+	double double_sector=0.0;
+	
 
 	int linenumber=9999;
 	int columnnumber=9999;
@@ -42,7 +45,9 @@ enum tsymbol {
 	/* 40         41          42        43           44         45     */
 	tchar,  tdouble,          tfor,     tdo,         tgoto,     tswitch,
 	/* 46         47          48        49           50         51     */
-	tcase,        tbreak,     tdefault, tcolon,      tcharlit,  tstrlit 
+	tcase,        tbreak,     tdefault, tcolon,      tcharlit,  tstrlit,
+	/* 52     */
+	   tdoublelit,
 };
 
 
