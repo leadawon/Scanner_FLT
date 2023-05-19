@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
 
 	//codeGen(root);
 	printf(" *** end   of Mini C Compiler\n");
+	scanf("%d",&lp);
 	
 } // end of main
 

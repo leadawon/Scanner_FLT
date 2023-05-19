@@ -291,6 +291,7 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 				}
 				else if (ch == '='){  
 					token.number = tdivAssign;
+
 					
 				}
 				else {
@@ -301,6 +302,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 				break;
 			
 		case '!':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile); //다음거가져온다. 
 			if (ch == '=')  token.number = tnotequ; //다를때 논리연산자
 			else {
@@ -310,6 +313,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '%':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '=') {
 				token.number = tremAssign;
@@ -321,6 +326,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '&':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '&')  token.number = tand;
 			else {
@@ -330,6 +337,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '*':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '=')  token.number = tmulAssign;
 			else {
@@ -339,6 +348,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '+':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '+')  token.number = tinc;
 			else if (ch == '=') token.number = taddAssign;
@@ -349,6 +360,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '-':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '-')  token.number = tdec;
 			else if (ch == '=') token.number = tsubAssign;
@@ -359,6 +372,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '<':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '=') token.number = tlesse;
 			else {
@@ -368,6 +383,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '=':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '=')  token.number = tequal;
 			else {
@@ -377,6 +394,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '>':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '=') token.number = tgreate;
 			else {
@@ -386,6 +405,8 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 			}
 			break;
 		case '|':
+			token.columnnumber = *column;
+			token.linenumber = *line;
 			ch = fgetc(sourceFile);
 			if (ch == '|')  token.number = tor;
 			else {
