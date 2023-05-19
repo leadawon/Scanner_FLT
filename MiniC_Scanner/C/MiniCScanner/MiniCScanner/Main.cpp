@@ -2,7 +2,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <iostream>
 #include "Scanner.h"
 //g++ -g Scanner.cpp Main.cpp -o Scanner.exe
 //./Scanner.exe ./example.mc
@@ -47,8 +46,7 @@ int main(int argc, char *argv[])
 	token = scanner(&lp,&cp);
 	
 	while (token.number != teof) {
-		std::cout.width(4);
-		std::cout <<  std::right << tokencounter << " ";
+		printf("%3d ",tokencounter);
 		tokencounter += 1; 
 		printf("Token -----> ");
 		printToken(token, fileName);
@@ -68,7 +66,6 @@ int main(int argc, char *argv[])
 	//codeGen(root);
 	printf(" *** end   of Mini C Compiler\n");
 	
-	std::cout << std::flush;
 } // end of main
 
 void icg_error(int n)

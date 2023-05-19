@@ -193,23 +193,113 @@ struct tokenType scanner(int* line, int* column) // 토큰타입을 반환하는
 				*column -= 1;
 			}
 		}
-		else switch (ch) {  // special character
-		case '/':
-			ch = fgetc(sourceFile); //다음거까지 가져온다.
-			if (ch == '*')			// text comment
-				do {
-					while (ch != '*') ch = fgetc(sourceFile);
+		else switch (ch) {
+		case '/': 
+				token.columnnumber = *column;
+				token.linenumber = *line;
+				ch = fgetc(sourceFile);
+				*column += 1;
+				if (ch=='*'){ //      /*
 					ch = fgetc(sourceFile);
-				} while (ch != '/'); //멀티라인주석 -> 따로 token을 건들지 않네.. tnull
-			else if (ch == '/')		// line comment -> 마찬가지... tnull
-				while (fgetc(sourceFile) != '\n'); //줄바꿈이 일어날때까지 스트림에서 받는다.
-			else if (ch == '=')  token.number = tdivAssign; // div assign
-			else {
-				token.number = tdiv; //걍 나누기구나~~
-				ungetc(ch, sourceFile); // retract // 하나미리 받은거 스트림에 돌려준다.
-				*column -= 1;
-			}
-			break;
+					*column+=1;
+					if (ch == '\n') {
+						*column = 0;
+						*line += 1;
+					}
+					if (ch == '*')//        /**
+					{
+						printf("Documented Comments ------> ");
+						do {
+							while (ch != '*')//    /** *
+							{
+
+								printf("%c", ch);
+								ch = fgetc(sourceFile);
+								*column += 1;
+								if (ch == '\n') {
+									*column = 0;
+									*line += 1;
+								}
+									
+
+							}
+							ch = fgetc(sourceFile);
+							*column+=1;
+							if (ch == '\n') {
+								*column = 0;
+								*line += 1;
+							}
+								
+						} while (ch != '/'); //   /** */
+						printf("\n");
+
+					}
+					else // multiline
+					{
+						ungetc(ch, sourceFile);
+						*column -= 1;
+						do {
+							while (ch !='*'){ //       /* *
+								ch = fgetc(sourceFile);
+								*column+=1;
+								if (ch == '\n'){
+									*column = 0;
+									*line+=1;
+								}	
+							}
+							ch = fgetc(sourceFile);
+							*column += 1;
+							if (ch == '\n') {
+								*column = 0;
+								*line += 1;
+							}
+								
+						} while (ch != '/');//       /* */
+					}
+				}
+				else if(ch == '/') //        //
+				{
+					ch = fgetc(sourceFile);
+					*column += 1;
+					if (ch == '/'){//         ///
+					
+						printf("Documented Comments ------> ");
+
+						while (ch != '\n'){
+							ch = fgetc(sourceFile);
+							*column += 1;
+							printf("%c", ch);
+							if (ch == '\n') {
+								*column = 0;
+								*line+=1;
+							}	
+						}
+						
+					}
+					else{//          //
+						ungetc(ch, sourceFile); //    //\n
+						while (true){
+							ch = fgetc(sourceFile);
+							*column += 1;
+							if (ch=='\n'){
+								break;
+							}
+						}
+						*line += 1;
+						*column = 0;
+					}
+				}
+				else if (ch == '='){  
+					token.number = tdivAssign;
+					
+				}
+				else {
+					token.number = tdiv;
+					ungetc(ch, sourceFile); // retract
+					*column -= 1;
+				}
+				break;
+			
 		case '!':
 			ch = fgetc(sourceFile); //다음거가져온다. 
 			if (ch == '=')  token.number = tnotequ; //다를때 논리연산자
@@ -571,15 +661,15 @@ int hexValue(char ch)
 void printToken(struct tokenType token, char* fileName)
 {
 	if (token.number == tident) // keyword가 아닌넘들
-		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.id, fileName, token.linenumber, token.columnnumber);
+		printf("%9s (%3d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.id, fileName, token.linenumber, token.columnnumber);
 	else if (token.number == tnumber) //숫자
-		printf("%s (%d, %d, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.num, fileName, token.linenumber, token.columnnumber);
+		printf("%9s (%3d, %d, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.num, fileName, token.linenumber, token.columnnumber);
 	else if (token.number == tcharlit || token.number == tstrlit)
-		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.id, fileName, token.linenumber, token.columnnumber);
+		printf("%9s (%3d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, token.value.id, fileName, token.linenumber, token.columnnumber);
 	else if (token.number == tdoublelit)
-		printf("%s (%d, %lf, %s, %d, %d)\n",tokenName[token.number], token.number, token.double_sector, fileName, token.linenumber, token.columnnumber);
+		printf("%9s (%3d, %lf, %s, %d, %d)\n",tokenName[token.number], token.number, token.double_sector, fileName, token.linenumber, token.columnnumber);
 	else{ // 이미 정의되있는 TN으로도 알 수 있는 것들
-		printf("%s (%d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, tokenName[token.number], fileName ,token.linenumber, token.columnnumber);
+		printf("%9s (%3d, %s, %s, %d, %d)\n",tokenName[token.number], token.number, tokenName[token.number], fileName ,token.linenumber, token.columnnumber);
 		}
 
 }

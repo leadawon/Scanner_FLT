@@ -27,3 +27,11 @@ ab '\\' 'k' ;
 10.123ea;
 34. 54.;
 .43 .78 87.2;
+asd //sico
+/*muco*/ 123
+/** dawon.mc */ // hello
+dawon /// auth name
+/= 123
+
+123
+
